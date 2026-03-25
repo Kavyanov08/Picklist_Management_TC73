@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Picklist Upload</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ✅ NAVBAR -->
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+
+        <!-- LEFT LOGO -->
+        <img src="/static/logo.png" height="40">
+
+        <!-- CENTER TITLE -->
+        <span class="navbar-brand mx-auto text-center">Plenum Picklist Management</span>
+
+        <div style="width:40px;"></div> <!-- spacing -->
+    </div>
+</nav>
+
+<div class="container mt-5">
+
+    <!-- ✅ UPLOAD CARD -->
+    <div class="card shadow p-4">
+        <h4>Upload Picklist Excel</h4>
+
+        <form id="uploadForm">
+            <input type="file" name="file" class="form-control mb-3" required>
+            <button class="btn btn-success">Upload</button>
+        </form>
+    </div>
+
+    <!-- ✅ TABLE -->
+    <div class="card shadow p-4 mt-4">
+        <h5>Picklist Data</h5>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- ✅ POPUP MODAL -->
+<div class="modal fade" id="popupModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Message</h5>
+      </div>
+
+      <div class="modal-body" id="popupMessage"></div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+// ✅ LOAD TABLE DATA
+function loadTable() {
+    fetch('/all_picklist')
+    .then(res => res.json())
+    .then(data => {
+        let rows = "";
+        data.forEach(item => {
+            rows += `
+                <tr>
+                    <td>${item.code}</td>
+                    <td>
+                        <span class="badge ${item.status === 'picked' ? 'bg-success' : 'bg-warning'}">
+                            ${item.status}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+        document.getElementById("tableBody").innerHTML = rows;
+    });
+}
+
+// ✅ UPLOAD WITHOUT PAGE RELOAD
+document.getElementById("uploadForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        let message = "";
+
+        if(data.status === "success"){
+            message = "Upload Successful ✅";
+            loadTable(); // refresh table
+        } else {
+            message = "Upload Failed ❌<br>" + data.message;
+        }
+
+        document.getElementById("popupMessage").innerHTML = message;
+        new bootstrap.Modal(document.getElementById('popupModal')).show();
+    });
+});
+
+// ✅ INITIAL LOAD
+loadTable();
+
+</script>
+
+</body>
+</html>
